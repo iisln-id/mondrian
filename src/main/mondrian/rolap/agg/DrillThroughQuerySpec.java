@@ -85,7 +85,9 @@ class DrillThroughQuerySpec extends AbstractQuerySpec {
         final List<String> columnNames,
         final Set<String> columnNameSet)
     {
-        String columnName = column.getName();
+        String columnName = request.includeInSelect(column)
+            ? column.getLabel()
+            : "_" + column.getName();
         if (columnName != null) {
             // nothing
         } else if (column.getExpression() instanceof MondrianDef.Column) {
@@ -139,9 +141,14 @@ class DrillThroughQuerySpec extends AbstractQuerySpec {
     }
 
     public String getMeasureAlias(final int i) {
-        return request.getDrillThroughMeasures().size() > 0
-            ? request.getDrillThroughMeasures().get(i).getName()
-            : columnNames.get(columnNames.size() - 1);
+        if (request.getDrillThroughMeasures().size() > 0) {
+            RolapStar.Measure measure = request.getDrillThroughMeasures().get(i);
+            return request.includeInSelect(measure)
+                ? measure.getLabel()
+                : "_" + measure.getName();
+        } else {
+            return columnNames.get(columnNames.size() - 1);
+        }
     }
 
     public RolapStar.Column[] getColumns() {

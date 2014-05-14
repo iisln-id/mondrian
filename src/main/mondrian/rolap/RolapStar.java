@@ -881,15 +881,18 @@ public class RolapStar {
         private AtomicInteger approxCardinality = new AtomicInteger(
             Integer.MIN_VALUE);
 
+        private String label;
+
         private Column(
             String name,
             Table table,
             MondrianDef.Expression expression,
-            Dialect.Datatype datatype)
+            Dialect.Datatype datatype,
+            String label)
         {
             this(
                 name, table, expression, datatype, null, null,
-                null, null, Integer.MIN_VALUE, table.star.nextColumnCount());
+                null, null, Integer.MIN_VALUE, table.star.nextColumnCount(), label);
         }
 
         private Column(
@@ -902,7 +905,8 @@ public class RolapStar {
             Column parentColumn,
             String usagePrefix,
             int approxCardinality,
-            int bitPosition)
+            int bitPosition,
+            String label)
         {
             this.name = name;
             this.table = table;
@@ -915,6 +919,7 @@ public class RolapStar {
             this.nameColumn = nameColumn;
             this.parentColumn = parentColumn;
             this.usagePrefix = usagePrefix;
+            this.label = label;
             this.approxCardinality.set(approxCardinality);
             if (nameColumn != null) {
                 nameColumn.isNameColumn = true;
@@ -941,7 +946,8 @@ public class RolapStar {
                 null,
                 null,
                 Integer.MIN_VALUE,
-                0);
+                0,
+                null);
         }
 
         public boolean equals(Object obj) {
@@ -1162,6 +1168,10 @@ public class RolapStar {
         public SqlStatement.Type getInternalType() {
             return internalType;
         }
+
+        public String getLabel() {
+            return label;
+        }
     }
 
     /**
@@ -1180,9 +1190,10 @@ public class RolapStar {
             RolapAggregator aggregator,
             Table table,
             MondrianDef.Expression expression,
-            Dialect.Datatype datatype)
+            Dialect.Datatype datatype,
+            String label)
         {
-            super(name, table, expression, datatype);
+            super(name, table, expression, datatype, label);
             this.cubeName = cubeName;
             this.aggregator = aggregator;
         }
@@ -1452,7 +1463,8 @@ public class RolapStar {
                 measure.getAggregator(),
                 this,
                 measure.getMondrianDefExpression(),
-                measure.getDatatype());
+                measure.getDatatype(),
+                measure.getCaption());
 
             measure.setStarMeasure(starMeasure); // reverse mapping
 
@@ -1491,7 +1503,8 @@ public class RolapStar {
                     null,
                     null,
                     null,
-                    null);
+                    null,
+                    level.getCaption());
             }
 
             // select the column's name depending upon whether or not a
@@ -1511,7 +1524,8 @@ public class RolapStar {
                 level.getInternalType(),
                 nameColumn,
                 parentColumn,
-                usagePrefix);
+                usagePrefix,
+                level.getCaption());
 
             if (column != null) {
                 level.setStarKeyColumn(column);
@@ -1529,7 +1543,8 @@ public class RolapStar {
             SqlStatement.Type internalType,
             Column nameColumn,
             Column parentColumn,
-            String usagePrefix)
+            String usagePrefix,
+            String label)
         {
             Table table = this;
             if (xmlExpr instanceof MondrianDef.Column) {
@@ -1580,7 +1595,8 @@ public class RolapStar {
                     parentColumn,
                     usagePrefix,
                     level.getApproxRowCount(),
-                    star.nextColumnCount());
+                    star.nextColumnCount(),
+                    label);
                 addColumn(column);
             }
             return column;
